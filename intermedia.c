@@ -58,32 +58,52 @@ int main(int argc, char* argv[]){
 	if(medico == -1){ //comprobacion de que el medico se cree bien
 		perror("Erros en la ceracion del medico\n");
 	}else if(medico == 0){ //codigo del medico
-		int i = 0;		
+		int i = 0;	
+		/*int j= 0, status, reaccion = 0, variable1;
+		mMedico.sa_handler = manejadoraMedico;
+		sigaction(SIGUSR2, &mMedico, NULL);
+		
+
+		pause();*/
+		
+		int j= 0, status, reaccion = 0, variable1;
+		mMedico.sa_handler = manejadoraMedico;
+		sigaction(SIGUSR2, &mMedico, NULL);
+
+		pause();
+	
+		//printf("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n");
 		for(i=0; i<posicion; i++){
 			pacientes[i] = fork();
-			if(pacientes[i] == -1){ //comprobacion de que los pinches se creen bien
+			if(pacientes[i] == -1){ //comprobacion de que los pacientes se creen bien
 				perror("Error en la creacion del hijo\n");
 			}else if(pacientes[i] == 0){ //codigo de los hijos
+				//printf("af\n");	
 				mPacientes.sa_handler = manejadoraPacientes;
 				sigaction(SIGUSR1, &mPacientes, NULL); //nos movemos a la manejadora
 				for(;;) pause();
 			}
 		}
-
-		//for(;;) pause();
 		
-		int j= 0, status, s, variable1;
-		mMedico.sa_handler = manejadoraMedico;
-		sigaction(SIGUSR2, &mMedico, NULL);
-		//for(;;)pause();
-		//printf("bb%d\n",getpid());
-		sleep(5);
-		printf("as\n");
+		//printf("asd\n");
+
 		for(j = 0; j<posicion; j++){
+			//printf("asddddd\n");
 			kill(pacientes[j], SIGUSR1);
 			wait(&status);
+			variable1 = WEXITSTATUS(status);
+
+			if(variable1 == 1){
+				reaccion++;
+				printf("Soy el paciente[%d], y tengo reaccion\n",j+1);
+			}else if(variable1 == 2){
+				printf("Soy el paciente[%d], y no tengo reaccion\n", j+1);
+			}
 		}
-		for(;;) pause();
+		printf("%d\n",reaccion);
+		exit(reaccion);
+		//for(;;) pause();
+
 	}	
 
 
@@ -101,6 +121,12 @@ int main(int argc, char* argv[]){
 		printf("El farmaceutico tiene dosis\n-----Avisando al medico para que comience la vacunacion-----\n");
 		kill(medico, SIGUSR2);
 	}
+	
+	int sta, variable3;
+	wait(&sta);
+	variable3 = WEXITSTATUS(sta);
+
+	printf("epi:%d\n",variable3);
 	sleep(2);
 }
 
@@ -123,7 +149,24 @@ void manejadoraMedico(int signal){
 }
 
 void manejadoraPacientes(int signal){
-	printf("me ha llegado\n");
+
+	srand (time(NULL));
+
+	/*if(signal == SIGUSR1){
+		exit(0);
+	}*/
+
+	sleep(2);
+	
+	if(calculaAleatorios(1,10)%2==0){
+		printf("MEDICO: Soy el paciente[], y tengo reaccion\n");
+		exit(1);
+	}else{
+		printf("no tiene reaccion\n");
+		exit(2);
+
+	}
+	
 }
 
 int calculaAleatorios(int min, int max){
