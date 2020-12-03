@@ -19,7 +19,7 @@ case $n in
 
 	2) gcc intermedia.c -o intermedia;;
 
-	3) echo Introduce el numero de pinches
+	3) echo Introduce el numero de pacientes
 
 		read i
 
