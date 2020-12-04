@@ -13,11 +13,20 @@ void manejadoraPacientes(int signal);
 
 int main(int argc, char* argv[]){
 
+	int posicion = atoi(argv[1]);
+	
 	if(argc!=2){ //comprobacion de los argumentos
 		perror("[Sistema]\nNumero de argumentos invalido\n");
 		exit(1);
 	}	
 	
+	if(posicion<=0){ //Aquí compruebo que el numero de pacientes es mayor que 0
+
+		perror("[Sistema]: Número de argumentos inválido, tiene que ser mayor que 0\n");
+
+		exit(1);
+
+	}
 
 	struct sigaction mFarmaceutico;
 	struct sigaction mMedico;
@@ -28,15 +37,7 @@ int main(int argc, char* argv[]){
 	printf("-------------Arrancando-------------\n[Sistema]: Inicializando hijos\n");
 	printf("\n");	
 
-	int posicion = atoi(argv[1]);
-	
-	if(posicion<=0){ //Aquí compruebo que el numero de pacientes es mayor que 0
 
-		perror("[Sistema]: Número de argumentos inválido, tiene que ser mayor que 0\n");
-
-		exit(1);
-
-	}
 
 	pid_t farmaceutico, medico, pacientes[posicion];
 	
@@ -56,7 +57,8 @@ int main(int argc, char* argv[]){
 
 	if(medico == -1){ //comprobacion de que el medico se cree bien
 		perror("[Sistema]: Error en la ceracion del medico\n");
-	}else if(medico == 0){ //codigo del medico
+
+	}else if(medico == 0){ 		//codigo del medico
 		int i = 0;	
 		int j= 0, status, reaccion = 0, variable1;
 		mMedico.sa_handler = manejadoraMedico;
@@ -64,17 +66,17 @@ int main(int argc, char* argv[]){
 
 		pause();
 		for(i=0; i<posicion; i++){
-			pacientes[i] = fork();
+			pacientes[i] = fork(); //Creacion de los pacientes
 			if(pacientes[i] == -1){ //comprobacion de que los pacientes se creen bien
 				perror("[Sistema]\nError en la creacion del hijo\n");
-			}else if(pacientes[i] == 0){ //codigo de los hijos
+			}else if(pacientes[i] == 0){ //codigo de los pacientes
 				mPacientes.sa_handler = manejadoraPacientes;
 				sigaction(SIGUSR1, &mPacientes, NULL); //nos movemos a la manejadora
 				for(;;) pause();
 			}
 		}
 
-		for(j = 0; j<posicion; j++){
+		for(j = 0; j<posicion; j++){ //Mandamos la senyal a los pacientes uno por uno
 			kill(pacientes[j], SIGUSR1);
 			wait(&status);
 			variable1 = WEXITSTATUS(status);
@@ -93,14 +95,14 @@ int main(int argc, char* argv[]){
 	sleep(2);
 	printf("[Epidemiologo] Soy el epidemiologo con pid [%d] hijos inicializados\n-------------Avisando al farmaceutico-------------\n", getpid());
 	printf("\n");
-	kill(farmaceutico,SIGUSR1);
+	kill(farmaceutico,SIGUSR1); //le manda la senyal al farmaceutico
 	int stat, variable;
-	wait(&stat);
+	wait(&stat); //Espera a q termine el farmaceutico
 	variable=WEXITSTATUS(stat);
 
 	if(variable == 1){
 		printf("[Epidemiologo] Soy el epidemiologo con pid [%d], no hay dosis\n-------------Abortando ejecucion-------------\n", getpid());
-		kill(medico, SIGUSR1);
+		kill(medico, SIGKILL);
 		exit(1);
 	}else {
 		printf("[Epidemiologo] Soy el epidemiologo con pid [%d], hay dosis\n-----Avisando al medico para que comience la vacunacion-----\n", getpid());
@@ -131,9 +133,7 @@ void manejadoraFarmaceutico(int signal){
 }
 
 void manejadoraMedico(int signal){
-	if(signal == SIGUSR1){
-		exit(0);
-	}
+
 	printf("[Medico] Soy el medico con pid [%d], Empezando a vacunar a los pacientes\n", getpid());
 	printf("\n");
 	
@@ -145,7 +145,7 @@ void manejadoraPacientes(int signal){
 	srand (time(NULL));
 	sleep(2);
 	
-	if(calculaAleatorios(1,10)%2==0){
+	if(calculaAleatorios(1,10)%2==0){ //Se comprueba si el numero aleatorio es par o impar
 		printf("[Paciente] Soy el paciente con pid[%d], y tengo reaccion\n", getpid());
 		exit(1);
 	}else{
